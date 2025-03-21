@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\CivilizationController;
+use App\Http\Controllers\Api\LeaderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,18 +16,5 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Example endpoint: List of civilizations
-Route::get('/civilizations', function () {
-    return response()->json([
-        ['id' => 1, 'name' => 'Ancient Rome'],
-        ['id' => 2, 'name' => 'Ancient Egypt'],
-    ]);
-});
-
-// Example endpoint: List of leaders
-Route::get('/leaders', function () {
-    return response()->json([
-        ['id' => 1, 'name' => 'Julius Caesar'],
-        ['id' => 2, 'name' => 'Cleopatra'],
-    ]);
-});
+Route::apiResource('civilizations', CivilizationController::class);
+Route::apiResource('leaders', LeaderController::class);
