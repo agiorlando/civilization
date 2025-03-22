@@ -187,87 +187,84 @@
   </div>
 </template>
 
-<script>
-import axios from "axios";
-import SearchFilter from "@/components/SearchFilter.vue";
-import PaginationControls from "@/components/PaginationControls.vue";
+<script lang="ts">
+import { defineComponent } from 'vue';
+import axios from 'axios';
+import SearchFilter from '@/components/SearchFilter.vue';
+import PaginationControls from '@/components/PaginationControls.vue';
 
-export default {
-  name: "Civilizations",
+export default defineComponent({
+  name: 'Civilizations',
   components: {
     SearchFilter,
     PaginationControls,
   },
   data() {
     return {
-      civilizations: [],
+      civilizations: [] as any[],
       showForm: false,
       editing: false,
       form: {
-        name: "",
-        icon: "",
+        name: '',
+        icon: '',
       },
-      currentId: null,
+      currentId: null as number | null,
       civHistoryModalVisible: false,
-      civHistory: [],
+      civHistory: [] as any[],
       leaderModalVisible: false,
-      leaderDetail: {},
-      searchQuery: "",
+      leaderDetail: {} as any,
+      searchQuery: '',
       currentPage: 1,
       pageSize: 10,
     };
   },
   watch: {
     searchQuery() {
-      // Reset current page when the search query changes.
       this.currentPage = 1;
     },
   },
   computed: {
-    filteredCivilizations() {
+    filteredCivilizations(): any[] {
       if (!this.searchQuery) return this.civilizations;
       const query = this.searchQuery.toLowerCase();
       return this.civilizations.filter((civ) => {
-        const civName = civ.name ? civ.name.toLowerCase() : "";
-        const leaderName =
-          civ.leader && civ.leader.name ? civ.leader.name.toLowerCase() : "";
+        const civName = civ.name ? civ.name.toLowerCase() : '';
+        const leaderName = civ.leader && civ.leader.name ? civ.leader.name.toLowerCase() : '';
         return civName.includes(query) || leaderName.includes(query);
       });
     },
-    totalPages() {
+    totalPages(): number {
       return Math.ceil(this.filteredCivilizations.length / this.pageSize);
     },
-    paginatedCivilizations() {
+    paginatedCivilizations(): any[] {
       const start = (this.currentPage - 1) * this.pageSize;
       return this.filteredCivilizations.slice(start, start + this.pageSize);
     },
   },
   mounted() {
     this.fetchCivilizations();
-    window.addEventListener("keydown", this.handleEscape);
+    window.addEventListener('keydown', this.handleEscape);
   },
   beforeUnmount() {
-    window.removeEventListener("keydown", this.handleEscape);
+    window.removeEventListener('keydown', this.handleEscape);
   },
   methods: {
-    handleEscape(e) {
-      if (e.key === "Escape") {
+    handleEscape(e: KeyboardEvent): void {
+      if (e.key === 'Escape') {
         if (this.showForm) this.cancelForm();
         if (this.civHistoryModalVisible) this.closeCivHistoryModal();
         if (this.leaderModalVisible) this.closeLeaderModal();
       }
     },
-    fetchCivilizations() {
+    fetchCivilizations(): void {
       axios
-        .get("/api/civilizations")
+        .get('/api/civilizations')
         .then((response) => {
           this.civilizations = response.data;
         })
-        .catch((error) =>
-          console.error("Error fetching civilizations:", error)
-        );
+        .catch((error) => console.error('Error fetching civilizations:', error));
     },
-    openForm(civ = null) {
+    openForm(civ?: any): void {
       if (civ) {
         this.editing = true;
         this.currentId = civ.id;
@@ -278,91 +275,81 @@ export default {
       } else {
         this.editing = false;
         this.currentId = null;
-        this.form = { name: "", icon: "" };
+        this.form = { name: '', icon: '' };
       }
       this.showForm = true;
     },
-    cancelForm() {
+    cancelForm(): void {
       this.showForm = false;
       this.editing = false;
       this.currentId = null;
-      this.form = { name: "", icon: "" };
+      this.form = { name: '', icon: '' };
     },
-    saveCivilization() {
-      if (this.editing) {
+    saveCivilization(): void {
+      if (this.editing && this.currentId !== null) {
         axios
           .put(`/api/civilizations/${this.currentId}`, this.form)
           .then(() => {
             this.fetchCivilizations();
             this.cancelForm();
           })
-          .catch((error) =>
-            console.error("Error updating civilization:", error)
-          );
+          .catch((error) => console.error('Error updating civilization:', error));
       } else {
         axios
-          .post("/api/civilizations", this.form)
+          .post('/api/civilizations', this.form)
           .then(() => {
             this.fetchCivilizations();
             this.cancelForm();
           })
-          .catch((error) =>
-            console.error("Error creating civilization:", error)
-          );
+          .catch((error) => console.error('Error creating civilization:', error));
       }
     },
-    deleteCivilization(id) {
-      if (confirm("Are you sure you want to delete this civilization?")) {
+    deleteCivilization(id: number): void {
+      if (confirm('Are you sure you want to delete this civilization?')) {
         axios
           .delete(`/api/civilizations/${id}`)
           .then(() => this.fetchCivilizations())
-          .catch((error) =>
-            console.error("Error deleting civilization:", error)
-          );
+          .catch((error) => console.error('Error deleting civilization:', error));
       }
     },
-    viewHistory(civId) {
+    viewHistory(civId: number): void {
       axios
         .get(`/api/civilizations/${civId}`)
         .then((response) => {
           this.civHistory = response.data.historical_info || [];
           this.civHistoryModalVisible = true;
         })
-        .catch((error) =>
-          console.error("Error fetching civilization history:", error)
-        );
+        .catch((error) => console.error('Error fetching civilization history:', error));
     },
-    closeCivHistoryModal() {
+    closeCivHistoryModal(): void {
       this.civHistoryModalVisible = false;
       this.civHistory = [];
     },
-    viewLeader(id) {
+    viewLeader(id: number): void {
       axios
         .get(`/api/leaders/${id}`)
         .then((response) => {
           this.leaderDetail = response.data;
           this.leaderModalVisible = true;
         })
-        .catch((error) =>
-          console.error("Error fetching leader detail:", error)
-        );
+        .catch((error) => console.error('Error fetching leader detail:', error));
     },
-    closeLeaderModal() {
+    closeLeaderModal(): void {
       this.leaderModalVisible = false;
       this.leaderDetail = {};
     },
-    prevPage() {
+    prevPage(): void {
       if (this.currentPage > 1) {
         this.currentPage--;
       }
     },
-    nextPage() {
+    nextPage(): void {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
     },
   },
-};
+});
 </script>
 
 <style scoped>

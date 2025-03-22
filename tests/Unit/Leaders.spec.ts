@@ -4,9 +4,9 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
 describe('Leaders.vue', () => {
-  let mock;
+  let mock: MockAdapter;
 
-  beforeEach(() => {
+  beforeEach((): void => {
     mock = new MockAdapter(axios);
 
     // Mock GET /api/civilizations used by Leaders.vue to fetch available civilizations.
@@ -17,11 +17,11 @@ describe('Leaders.vue', () => {
     mock.onGet('/api/civilizations').reply(200, defaultCivilizations);
   });
 
-  afterEach(() => {
+  afterEach((): void => {
     mock.restore();
   });
 
-  it('fetches and displays leaders', async () => {
+  it('fetches and displays leaders', async (): Promise<void> => {
     const leadersData = [
       {
         id: 1,
@@ -53,7 +53,7 @@ describe('Leaders.vue', () => {
     expect(wrapper.text()).toContain('Cleopatra');
   });
 
-  it('filters leaders based on search query', async () => {
+  it('filters leaders based on search query', async (): Promise<void> => {
     const leadersData = [
       {
         id: 1,
@@ -87,7 +87,7 @@ describe('Leaders.vue', () => {
     expect(wrapper.text()).not.toContain('Caesar');
   });
 
-  it('opens modal to view leader details when a leader name is clicked', async () => {
+  it('opens modal to view leader details when a leader name is clicked', async (): Promise<void> => {
     const leaderDetail = {
       id: 1,
       name: 'Caesar',

@@ -223,40 +223,40 @@
         </ul>
       </div>
     </div>
-
   </div>
 </template>
 
-<script>
-import axios from "axios";
-import SearchFilter from "@/components/SearchFilter.vue";
-import PaginationControls from "@/components/PaginationControls.vue";
+<script lang="ts">
+import { defineComponent } from 'vue';
+import axios from 'axios';
+import SearchFilter from '@/components/SearchFilter.vue';
+import PaginationControls from '@/components/PaginationControls.vue';
 
-export default {
-  name: "Leaders",
+export default defineComponent({
+  name: 'Leaders',
   components: {
     SearchFilter,
     PaginationControls,
   },
   data() {
     return {
-      leaders: [],
-      availableCivilizations: [],
+      leaders: [] as any[],
+      availableCivilizations: [] as any[],
       showForm: false,
       editing: false,
       form: {
-        name: "",
-        civilization_id: "",
-        icon: "",
-        subtitle: "",
-        lifespan: "",
+        name: '',
+        civilization_id: '',
+        icon: '',
+        subtitle: '',
+        lifespan: '',
       },
-      currentId: null,
+      currentId: null as number | null,
       leaderModalVisible: false,
-      leaderDetail: {},
+      leaderDetail: {} as any,
       civModalVisible: false,
-      civDetail: {},
-      searchQuery: "",
+      civDetail: {} as any,
+      searchQuery: '',
       currentPage: 1,
       pageSize: 10,
     };
@@ -268,23 +268,22 @@ export default {
     },
   },
   computed: {
-    filteredLeaders() {
+    filteredLeaders(): any[] {
       if (!this.searchQuery) return this.leaders;
       const query = this.searchQuery.toLowerCase();
       return this.leaders.filter((leader) => {
-        const name = leader.name ? leader.name.toLowerCase() : "";
-        const subtitle = leader.subtitle ? leader.subtitle.toLowerCase() : "";
-        const civName =
-          leader.civilization && leader.civilization.name
-            ? leader.civilization.name.toLowerCase()
-            : "";
+        const name = leader.name ? leader.name.toLowerCase() : '';
+        const subtitle = leader.subtitle ? leader.subtitle.toLowerCase() : '';
+        const civName = leader.civilization && leader.civilization.name
+          ? leader.civilization.name.toLowerCase()
+          : '';
         return name.includes(query) || subtitle.includes(query) || civName.includes(query);
       });
     },
-    totalPages() {
+    totalPages(): number {
       return Math.ceil(this.filteredLeaders.length / this.pageSize);
     },
-    paginatedLeaders() {
+    paginatedLeaders(): any[] {
       const start = (this.currentPage - 1) * this.pageSize;
       return this.filteredLeaders.slice(start, start + this.pageSize);
     },
@@ -292,43 +291,37 @@ export default {
   mounted() {
     this.fetchLeaders();
     this.fetchAvailableCivilizations();
-    window.addEventListener("keydown", this.handleEscape);
+    window.addEventListener('keydown', this.handleEscape);
   },
   beforeUnmount() {
-    window.removeEventListener("keydown", this.handleEscape);
+    window.removeEventListener('keydown', this.handleEscape);
   },
   methods: {
-    handleEscape(e) {
-      if (e.key === "Escape") {
+    handleEscape(e: KeyboardEvent): void {
+      if (e.key === 'Escape') {
         if (this.showForm) this.cancelForm();
         if (this.leaderModalVisible) this.closeLeaderModal();
         if (this.civModalVisible) this.closeCivModal();
       }
     },
-    fetchLeaders() {
+    fetchLeaders(): void {
       axios
-        .get("/api/leaders")
+        .get('/api/leaders')
         .then((response) => {
           this.leaders = response.data;
         })
-        .catch((error) =>
-          console.error("Error fetching leaders:", error)
-        );
+        .catch((error) => console.error('Error fetching leaders:', error));
     },
-    fetchAvailableCivilizations() {
+    fetchAvailableCivilizations(): void {
       axios
-        .get("/api/civilizations")
+        .get('/api/civilizations')
         .then((response) => {
           // Only include civilizations that do not have a leader assigned.
-          this.availableCivilizations = response.data.filter(
-            (civ) => !civ.leader
-          );
+          this.availableCivilizations = response.data.filter((civ: any) => !civ.leader);
         })
-        .catch((error) =>
-          console.error("Error fetching civilizations:", error)
-        );
+        .catch((error) => console.error('Error fetching civilizations:', error));
     },
-    openForm(leader = null) {
+    openForm(leader?: any): void {
       if (leader) {
         this.editing = true;
         this.currentId = leader.id;
@@ -337,102 +330,92 @@ export default {
         this.editing = false;
         this.currentId = null;
         this.form = {
-          name: "",
-          civilization_id: "",
-          icon: "",
-          subtitle: "",
-          lifespan: "",
+          name: '',
+          civilization_id: '',
+          icon: '',
+          subtitle: '',
+          lifespan: '',
         };
       }
       this.showForm = true;
     },
-    cancelForm() {
+    cancelForm(): void {
       this.showForm = false;
       this.editing = false;
       this.currentId = null;
       this.form = {
-        name: "",
-        civilization_id: "",
-        icon: "",
-        subtitle: "",
-        lifespan: "",
+        name: '',
+        civilization_id: '',
+        icon: '',
+        subtitle: '',
+        lifespan: '',
       };
     },
-    saveLeader() {
-      if (this.editing) {
+    saveLeader(): void {
+      if (this.editing && this.currentId !== null) {
         axios
           .put(`/api/leaders/${this.currentId}`, this.form)
           .then(() => {
             this.fetchLeaders();
             this.cancelForm();
           })
-          .catch((error) =>
-            console.error("Error updating leader:", error)
-          );
+          .catch((error) => console.error('Error updating leader:', error));
       } else {
         axios
-          .post("/api/leaders", this.form)
+          .post('/api/leaders', this.form)
           .then(() => {
             this.fetchLeaders();
             this.cancelForm();
           })
-          .catch((error) =>
-            console.error("Error creating leader:", error)
-          );
+          .catch((error) => console.error('Error creating leader:', error));
       }
     },
-    deleteLeader(id) {
-      if (confirm("Are you sure you want to delete this leader?")) {
+    deleteLeader(id: number): void {
+      if (confirm('Are you sure you want to delete this leader?')) {
         axios
           .delete(`/api/leaders/${id}`)
           .then(() => this.fetchLeaders())
-          .catch((error) =>
-            console.error("Error deleting leader:", error)
-          );
+          .catch((error) => console.error('Error deleting leader:', error));
       }
     },
-    viewLeader(id) {
+    viewLeader(id: number): void {
       axios
         .get(`/api/leaders/${id}`)
         .then((response) => {
           this.leaderDetail = response.data;
           this.leaderModalVisible = true;
         })
-        .catch((error) =>
-          console.error("Error fetching leader detail:", error)
-        );
+        .catch((error) => console.error('Error fetching leader detail:', error));
     },
-    closeLeaderModal() {
+    closeLeaderModal(): void {
       this.leaderModalVisible = false;
       this.leaderDetail = {};
     },
-    viewCivilization(civId) {
+    viewCivilization(civId: number): void {
       axios
         .get(`/api/civilizations/${civId}`)
         .then((response) => {
           this.civDetail = response.data;
           this.civModalVisible = true;
         })
-        .catch((error) =>
-          console.error("Error fetching civilization details:", error)
-        );
+        .catch((error) => console.error('Error fetching civilization details:', error));
     },
-    closeCivModal() {
+    closeCivModal(): void {
       this.civModalVisible = false;
       this.civDetail = {};
     },
-    prevPage() {
+    prevPage(): void {
       if (this.currentPage > 1) {
         this.currentPage--;
       }
     },
-    nextPage() {
+    nextPage(): void {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
     },
   },
-};
+});
 </script>
 
 <style scoped>

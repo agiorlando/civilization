@@ -15,6 +15,6 @@ describe('SearchFilter.vue', () => {
     const input = wrapper.find('input');
     await input.setValue('test');
     expect(wrapper.emitted('update:modelValue')).toBeTruthy();
-    expect(wrapper.emitted('update:modelValue')[0]).toEqual(['test']);
+    expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['test']);
   });
 });

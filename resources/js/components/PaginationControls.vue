@@ -18,8 +18,10 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: "PaginationControls",
   props: {
     currentPage: {
@@ -31,5 +33,5 @@ export default {
       required: true,
     },
   },
-};
+});
 </script>
