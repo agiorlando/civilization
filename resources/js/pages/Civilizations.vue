@@ -99,6 +99,9 @@
               class="border px-3 py-2 w-full"
               required
             />
+            <div v-if="errors.name" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.name" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="mb-4">
             <label class="block mb-1">Icon URL:</label>
@@ -108,6 +111,9 @@
               class="border px-3 py-2 w-full"
               required
             />
+            <div v-if="errors.icon" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.icon" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="flex justify-end">
             <button
@@ -208,6 +214,7 @@ export default defineComponent({
         name: '',
         icon: '',
       },
+      errors: {} as Record<string, string[]>,
       currentId: null as number | null,
       civHistoryModalVisible: false,
       civHistory: [] as any[],
@@ -286,6 +293,8 @@ export default defineComponent({
       this.form = { name: '', icon: '' };
     },
     saveCivilization(): void {
+      // Clear previous errors
+      this.errors = {};
       if (this.editing && this.currentId !== null) {
         axios
           .put(`/api/civilizations/${this.currentId}`, this.form)
@@ -293,7 +302,12 @@ export default defineComponent({
             this.fetchCivilizations();
             this.cancelForm();
           })
-          .catch((error) => console.error('Error updating civilization:', error));
+          .catch((error) => {
+            if (error.response && error.response.data.errors) {
+              this.errors = error.response.data.errors;
+            }
+            console.error('Error updating civilization:', error);
+          });
       } else {
         axios
           .post('/api/civilizations', this.form)
@@ -301,7 +315,12 @@ export default defineComponent({
             this.fetchCivilizations();
             this.cancelForm();
           })
-          .catch((error) => console.error('Error creating civilization:', error));
+          .catch((error) => {
+            if (error.response && error.response.data.errors) {
+              this.errors = error.response.data.errors;
+            }
+            console.error('Error creating civilization:', error);
+          });
       }
     },
     deleteCivilization(id: number): void {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Civilization;
+use App\Rules\ReachableUrl;
 use Illuminate\Http\Request;
 
 class CivilizationController extends Controller
@@ -11,14 +12,19 @@ class CivilizationController extends Controller
     // Return a list of all civilizations.
     public function index(): \Illuminate\Http\JsonResponse
     {
-        $civilizations = \App\Models\Civilization::with('leader')->get();
+        $civilizations = Civilization::with('leader')->get();
         return response()->json($civilizations);
     }
 
     // Store a new civilization.
     public function store(Request $request): \Illuminate\Http\JsonResponse
     {
-        $civilization = Civilization::create($request->only(['name', 'icon']));
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'icon' => ['required', 'url', 'regex:/^https?:\/\//i', 'max:255', new ReachableUrl()],
+        ]);
+
+        $civilization = Civilization::create($validatedData);
         return response()->json($civilization, 201);
     }
 
@@ -32,7 +38,12 @@ class CivilizationController extends Controller
     // Update a civilization.
     public function update(Request $request, Civilization $civilization): \Illuminate\Http\JsonResponse
     {
-        $civilization->update($request->only(['name', 'icon']));
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'icon' => ['required', 'url', 'regex:/^https?:\/\//i', 'max:255', new ReachableUrl()],
+        ]);
+
+        $civilization->update($validatedData);
         return response()->json($civilization);
     }
 

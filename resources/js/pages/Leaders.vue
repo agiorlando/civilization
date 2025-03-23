@@ -102,6 +102,9 @@
               class="border px-3 py-2 w-full"
               required
             />
+            <div v-if="errors.name" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.name" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <!-- Dropdown for selecting an unused civilization -->
           <div class="mb-4">
@@ -120,6 +123,9 @@
                 {{ civ.name }}
               </option>
             </select>
+            <div v-if="errors.civilization_id" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.civilization_id" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="mb-4">
             <label class="block mb-1">Icon URL:</label>
@@ -129,6 +135,9 @@
               class="border px-3 py-2 w-full"
               required
             />
+            <div v-if="errors.icon" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.icon" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="mb-4">
             <label class="block mb-1">Subtitle:</label>
@@ -137,6 +146,9 @@
               v-model="form.subtitle"
               class="border px-3 py-2 w-full"
             />
+            <div v-if="errors.subtitle" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.subtitle" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="mb-4">
             <label class="block mb-1">Lifespan:</label>
@@ -145,6 +157,9 @@
               v-model="form.lifespan"
               class="border px-3 py-2 w-full"
             />
+            <div v-if="errors.lifespan" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.lifespan" :key="index">{{ msg }}</div>
+            </div>
           </div>
           <div class="flex justify-end">
             <button
@@ -251,6 +266,7 @@ export default defineComponent({
         subtitle: '',
         lifespan: '',
       },
+      errors: {} as Record<string, string[]>,
       currentId: null as number | null,
       leaderModalVisible: false,
       leaderDetail: {} as any,
@@ -352,6 +368,8 @@ export default defineComponent({
       };
     },
     saveLeader(): void {
+      // Clear any previous errors
+      this.errors = {};
       if (this.editing && this.currentId !== null) {
         axios
           .put(`/api/leaders/${this.currentId}`, this.form)
@@ -359,7 +377,12 @@ export default defineComponent({
             this.fetchLeaders();
             this.cancelForm();
           })
-          .catch((error) => console.error('Error updating leader:', error));
+          .catch((error) => {
+            if (error.response && error.response.data.errors) {
+              this.errors = error.response.data.errors;
+            }
+            console.error('Error updating leader:', error);
+          });
       } else {
         axios
           .post('/api/leaders', this.form)
@@ -367,7 +390,12 @@ export default defineComponent({
             this.fetchLeaders();
             this.cancelForm();
           })
-          .catch((error) => console.error('Error creating leader:', error));
+          .catch((error) => {
+            if (error.response && error.response.data.errors) {
+              this.errors = error.response.data.errors;
+            }
+            console.error('Error creating leader:', error);
+          });
       }
     },
     deleteLeader(id: number): void {
