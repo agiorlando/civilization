@@ -16,7 +16,8 @@ class Leader extends Model
         'name',
         'icon',
         'subtitle',
-        'lifespan',
+        'life_start',
+        'life_end',
     ];
 
     /**

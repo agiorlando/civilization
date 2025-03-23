@@ -175,7 +175,7 @@
         </button>
         <h3 class="text-xl font-bold mb-2">
           <span>{{ leaderDetail.name }}</span>
-          <sup class="text-xs text-gray-500 ml-2">{{ leaderDetail.lifespan }}</sup>
+          <sup class="text-xs text-gray-500 ml-2">{{ formatLifespan(leaderDetail) }}</sup>
         </h3>
         <p class="text-sm text-gray-700 mb-4">{{ leaderDetail.subtitle }}</p>
         <h4 class="font-semibold mb-2">Historical Info:</h4>
@@ -366,6 +366,20 @@ export default defineComponent({
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
+    },
+    formatLifespan(leader: any): string {
+      if (!leader.life_start && !leader.life_end) {
+        return '';
+      }
+
+      const formatYear = (year: string): string => {
+        return year.startsWith('-') ? `${year.substring(1)} BCE` : `${year} CE`;
+      };
+
+      const start = leader.life_start ? formatYear(leader.life_start) : 'Unknown';
+      const end = leader.life_end ? formatYear(leader.life_end) : 'Unknown';
+
+      return `${start} - ${end}`;
     },
   },
 });

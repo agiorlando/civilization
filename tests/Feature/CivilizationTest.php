@@ -28,7 +28,7 @@ class CivilizationTest extends TestCase
     {
         $payload = [
             'name' => 'Test Civilization',
-            'icon' => 'https://example.com/icon.png',
+            'icon' => 'https://eyefyre.github.io/civvapi/images/civ_icons/america.png',
         ];
 
         $response = $this->postJson('/api/civilizations', $payload);
@@ -45,7 +45,7 @@ class CivilizationTest extends TestCase
 
         $payload = [
             'name' => 'Updated Civilization',
-            'icon' => 'https://example.com/updated.png',
+            'icon' => 'https://eyefyre.github.io/civvapi/images/civ_icons/america.png',
         ];
 
         $response = $this->putJson("/api/civilizations/{$civilization->id}", $payload);

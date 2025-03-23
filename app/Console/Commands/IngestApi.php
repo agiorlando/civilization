@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Civilization;
 use App\Models\Leader;
 use App\Models\HistoricalInfo;
+use App\Helpers\LifespanParser;
 
 class IngestApi extends Command
 {
@@ -73,6 +74,8 @@ class IngestApi extends Command
             // Process leader information if available.
             if (isset($civData['leader']) && is_array($civData['leader'])) {
                 $leaderData = $civData['leader'];
+                $lived = $leaderData['lived'] ?? '';
+                $lifeData = LifespanParser::parseLivedField($leaderData['lived'] ?? '');
 
                 $leader = Leader::updateOrCreate(
                     ['civilization_id' => $civilization->id],
@@ -80,7 +83,8 @@ class IngestApi extends Command
                         'name'      => $leaderData['name'] ?? '',
                         'icon'      => $leaderData['icon'] ?? '',
                         'subtitle'  => $leaderData['subtitle'] ?? '',
-                        'lifespan'  => $leaderData['lived'] ?? '',
+                        'life_start' => $lifeData['life_start'] ?? null,
+                        'life_end'   => $lifeData['life_end'] ?? null,
                     ]
                 );
 

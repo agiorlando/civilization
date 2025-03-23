@@ -24,8 +24,9 @@ class LeaderController extends Controller
             'name'            => 'required|string|max:255',
             'icon'            => ['required', 'url', 'regex:/^https?:\/\//i', 'max:255', new ReachableUrl()],
             'subtitle'        => 'required|string|max:255',
-            'lifespan'        => 'required|string|max:255',
-        ]);
+            'life_start'      => 'nullable|string|max:20|required_without:life_end',
+            'life_end'        => 'nullable|string|max:20|required_without:life_start',
+        ]);        
 
         $leader = Leader::create($validatedData);
         return response()->json($leader, 201);
@@ -46,8 +47,9 @@ class LeaderController extends Controller
             'name'            => 'required|string|max:255',
             'icon'            => ['required', 'url', 'regex:/^https?:\/\//i', 'max:255', new ReachableUrl()],
             'subtitle'        => 'required|string|max:255',
-            'lifespan'        => 'required|string|max:255',
-        ]);
+            'life_start'      => 'nullable|string|max:20|required_without:life_end',
+            'life_end'        => 'nullable|string|max:20|required_without:life_start',
+        ]);        
 
         $leader->update($validatedData);
         return response()->json($leader);

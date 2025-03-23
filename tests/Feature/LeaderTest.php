@@ -32,9 +32,10 @@ class LeaderTest extends TestCase
         $payload = [
             'name'             => 'Test Leader',
             'civilization_id'  => $civ->id,
-            'icon'             => 'https://example.com/leader.png',
+            'icon'             => 'https://eyefyre.github.io/civvapi/images/leader_icons/george_washington.png',
             'subtitle'         => 'Test Subtitle',
-            'lifespan'         => '200-300 AD',
+            'life_start'       => '200',
+            'life_end'         => '300',
         ];
 
         $response = $this->postJson('/api/leaders', $payload);
@@ -53,9 +54,10 @@ class LeaderTest extends TestCase
         $payload = [
             'name'             => 'Updated Leader',
             'civilization_id'  => $civ->id,
-            'icon'             => 'https://example.com/updated.png',
+            'icon'             => 'https://eyefyre.github.io/civvapi/images/leader_icons/george_washington.png',
             'subtitle'         => 'Updated Subtitle',
-            'lifespan'         => '300-400 AD',
+            'life_start'       => '300',
+            'life_end'         => '400',
         ];
 
         $response = $this->putJson("/api/leaders/{$leader->id}", $payload);
@@ -96,7 +98,7 @@ class LeaderTest extends TestCase
         // Create 2 historical info records associated with this leader.
         HistoricalInfo::factory()->count(2)->create([
             'taxonomy_id' => $leader->id,
-            'type' => Leader::class,
+            'type'        => Leader::class,
         ]);
 
         $leader->load('historicalInfo');

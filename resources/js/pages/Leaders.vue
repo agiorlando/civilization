@@ -20,7 +20,11 @@
           <th class="py-2 border-b border-gray-200">Name</th>
           <th class="py-2 border-b border-gray-200">Subtitle</th>
           <th class="py-2 border-b border-gray-200">Civilization</th>
-          <th class="py-2 border-b border-gray-200">Lifespan</th>
+          <th class="py-2 border-b border-gray-200 cursor-pointer" @click="toggleSort">
+            Lifespan
+            <span v-if="sortDirection === 'asc'">↑</span>
+            <span v-else>↓</span>
+          </th>
           <th class="py-2 border-b border-gray-200">Actions</th>
         </tr>
       </thead>
@@ -50,7 +54,7 @@
             </span>
             <span v-else class="text-gray-500 text-sm">None</span>
           </td>
-          <td class="px-4 py-2 border-b border-gray-200">{{ leader.lifespan }}</td>
+          <td class="px-4 py-2 border-b border-gray-200">{{ formatLifespan(leader) }}</td>
           <td class="px-4 py-2 border-b border-gray-200">
             <button
               @click="openForm(leader)"
@@ -152,13 +156,26 @@
           </div>
           <div class="mb-4">
             <label class="block mb-1">Lifespan:</label>
-            <input
-              type="text"
-              v-model="form.lifespan"
-              class="border px-3 py-2 w-full"
-            />
-            <div v-if="errors.lifespan" class="mt-1 text-red-600 text-sm">
-              <div v-for="(msg, index) in errors.lifespan" :key="index">{{ msg }}</div>
+            <div class="flex items-center space-x-2">
+              <input
+                type="text"
+                v-model="form.life_start"
+                class="border px-3 py-2 w-full"
+                placeholder="Start"
+              />
+              <span>-</span>
+              <input
+                type="text"
+                v-model="form.life_end"
+                class="border px-3 py-2 w-full"
+                placeholder="End"
+              />
+            </div>
+            <div v-if="errors.life_start" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.life_start" :key="index">{{ msg }}</div>
+            </div>
+            <div v-if="errors.life_end" class="mt-1 text-red-600 text-sm">
+              <div v-for="(msg, index) in errors.life_end" :key="index">{{ msg }}</div>
             </div>
           </div>
           <div class="flex justify-end">
@@ -195,7 +212,7 @@
         </button>
         <h3 class="text-xl font-bold mb-2">
           <span>{{ leaderDetail.name }}</span>
-          <sup class="text-xs text-gray-500 ml-2">{{ leaderDetail.lifespan }}</sup>
+          <sup class="text-xs text-gray-500 ml-2">{{ formatLifespan(leaderDetail) }}</sup>
         </h3>
         <p class="text-sm text-gray-700 mb-4">{{ leaderDetail.subtitle }}</p>
         <h4 class="font-semibold mb-2">Historical Info:</h4>
@@ -264,7 +281,8 @@ export default defineComponent({
         civilization_id: '',
         icon: '',
         subtitle: '',
-        lifespan: '',
+        life_start: '',
+        life_end: '',
       },
       errors: {} as Record<string, string[]>,
       currentId: null as number | null,
@@ -275,11 +293,11 @@ export default defineComponent({
       searchQuery: '',
       currentPage: 1,
       pageSize: 10,
+      sortDirection: 'asc' as 'asc' | 'desc', // new sort direction property
     };
   },
   watch: {
     searchQuery() {
-      // Reset current page when the search query changes.
       this.currentPage = 1;
     },
   },
@@ -296,12 +314,30 @@ export default defineComponent({
         return name.includes(query) || subtitle.includes(query) || civName.includes(query);
       });
     },
+    sortedLeaders(): any[] {
+      // Now sort the already filtered list
+      return [...this.filteredLeaders].sort((a, b) => {
+        const getSortValue = (leader: any): number => {
+          // Use life_start if available, otherwise use life_end; if neither, treat as Infinity.
+          if (leader.life_start) {
+            return parseInt(leader.life_start, 10);
+          } else if (leader.life_end) {
+            return parseInt(leader.life_end, 10);
+          }
+          return Infinity;
+        };
+
+        const aValue = getSortValue(a);
+        const bValue = getSortValue(b);
+        return this.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      });
+    },
     totalPages(): number {
-      return Math.ceil(this.filteredLeaders.length / this.pageSize);
+      return Math.ceil(this.sortedLeaders.length / this.pageSize);
     },
     paginatedLeaders(): any[] {
       const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredLeaders.slice(start, start + this.pageSize);
+      return this.sortedLeaders.slice(start, start + this.pageSize);
     },
   },
   mounted() {
@@ -313,6 +349,9 @@ export default defineComponent({
     window.removeEventListener('keydown', this.handleEscape);
   },
   methods: {
+    toggleSort(): void {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    },
     handleEscape(e: KeyboardEvent): void {
       if (e.key === 'Escape') {
         if (this.showForm) this.cancelForm();
@@ -332,8 +371,12 @@ export default defineComponent({
       axios
         .get('/api/civilizations')
         .then((response) => {
-          // Only include civilizations that do not have a leader assigned.
-          this.availableCivilizations = response.data.filter((civ: any) => !civ.leader);
+          // Include civilizations that do not have a leader assigned,
+          // OR the civilization that is currently assigned to this leader.
+          // We compare using Number() to ensure type consistency.
+          this.availableCivilizations = response.data.filter((civ: any) => {
+            return !civ.leader || (this.form.civilization_id && Number(this.form.civilization_id) === civ.id);
+          });
         })
         .catch((error) => console.error('Error fetching civilizations:', error));
     },
@@ -341,7 +384,14 @@ export default defineComponent({
       if (leader) {
         this.editing = true;
         this.currentId = leader.id;
-        this.form = { ...leader };
+        // Extract civilization id from leader: either directly or from the nested civilization object.
+        const civId = leader.civilization ? leader.civilization.id : leader.civilization_id;
+        this.form = {
+          ...leader,
+          civilization_id: civId,
+        };
+        // Re-fetch available civilizations after updating the form
+        this.fetchAvailableCivilizations();
       } else {
         this.editing = false;
         this.currentId = null;
@@ -350,8 +400,11 @@ export default defineComponent({
           civilization_id: '',
           icon: '',
           subtitle: '',
-          lifespan: '',
+          life_start: '',
+          life_end: '',
         };
+        // Optionally re-fetch available civilizations for the new form
+        this.fetchAvailableCivilizations();
       }
       this.showForm = true;
     },
@@ -364,7 +417,8 @@ export default defineComponent({
         civilization_id: '',
         icon: '',
         subtitle: '',
-        lifespan: '',
+        life_start: '',
+        life_end: '',
       };
     },
     saveLeader(): void {
@@ -441,6 +495,20 @@ export default defineComponent({
       if (this.currentPage < this.totalPages) {
         this.currentPage++;
       }
+    },
+    formatLifespan(leader: any): string {
+      if (!leader.life_start && !leader.life_end) {
+        return '';
+      }
+
+      const formatYear = (year: string): string => {
+        return year.startsWith('-') ? `${year.substring(1)} BCE` : `${year} CE`;
+      };
+
+      const start = leader.life_start ? formatYear(leader.life_start) : 'Unknown';
+      const end = leader.life_end ? formatYear(leader.life_end) : 'Unknown';
+
+      return `${start} - ${end}`;
     },
   },
 });
