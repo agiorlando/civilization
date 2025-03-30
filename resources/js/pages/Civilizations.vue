@@ -211,6 +211,7 @@ export default defineComponent({
       showForm: false,
       editing: false,
       form: {
+        id: null,
         name: '',
         icon: '',
       },
@@ -249,6 +250,28 @@ export default defineComponent({
     },
   },
   mounted() {
+    // Subscribe to civilization updates.
+    window.Echo.channel('civilization-updates')
+      .listen('CivilizationUpdated', (event: { civilization: any }) => {
+        console.log('CivilizationUpdated received:', event.civilization);
+        // If the modal is open and editing the same civilization, update the form.
+        if (this.editing && this.form.id === event.civilization.id) {
+          this.form = { ...event.civilization };
+        }
+        // Refresh the civilization list.
+        this.fetchCivilizations();
+      })
+      .listen('CivilizationDeleted', (event: { civilizationId: number }) => {
+        console.log('CivilizationDeleted received:', event.civilizationId);
+        // If the deleted civilization is being edited, close the modal.
+        if (this.editing && this.form.id === event.civilizationId) {
+          this.cancelForm();
+        }
+        // Refresh the civilization list.
+        this.fetchCivilizations();
+      });
+
+    // Fetch initial list of civilizations
     this.fetchCivilizations();
     window.addEventListener('keydown', this.handleEscape);
   },
@@ -276,13 +299,18 @@ export default defineComponent({
         this.editing = true;
         this.currentId = civ.id;
         this.form = {
+          id: civ.id,
           name: civ.name,
           icon: civ.icon,
         };
       } else {
         this.editing = false;
         this.currentId = null;
-        this.form = { name: '', icon: '' };
+        this.form = {
+          id: null,
+          name: '',
+          icon: '',
+        };
       }
       this.showForm = true;
     },
@@ -290,7 +318,7 @@ export default defineComponent({
       this.showForm = false;
       this.editing = false;
       this.currentId = null;
-      this.form = { name: '', icon: '' };
+      this.form = { id: null, name: '', icon: '' };
     },
     saveCivilization(): void {
       // Clear previous errors

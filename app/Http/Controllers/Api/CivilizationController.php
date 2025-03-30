@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Civilization;
 use App\Rules\ReachableUrl;
+use App\Events\DataChanged;
+use App\Events\CivilizationUpdated;
+use App\Events\CivilizationDeleted;
 use Illuminate\Http\Request;
 
 class CivilizationController extends Controller
@@ -25,6 +28,10 @@ class CivilizationController extends Controller
         ]);
 
         $civilization = Civilization::create($validatedData);
+
+        // Dispatch the DataChanged event to notify listeners about the new civilization creation.
+        event(new DataChanged('A new civilization has been created!'));
+
         return response()->json($civilization, 201);
     }
 
@@ -44,6 +51,10 @@ class CivilizationController extends Controller
         ]);
 
         $civilization->update($validatedData);
+        
+        // Dispatch the CivilizationUpdated event to notify listeners about the civilization update.
+        event(new CivilizationUpdated($civilization));
+
         return response()->json($civilization);
     }
 
@@ -51,6 +62,10 @@ class CivilizationController extends Controller
     public function destroy(Civilization $civilization): \Illuminate\Http\JsonResponse
     {
         $civilization->delete();
+
+        // Dispatch the DataChanged event to notify listeners about the civilization deletion.
+        event(new CivilizationDeleted($civilization->id));
+
         return response()->json(null, 204);
     }
 }

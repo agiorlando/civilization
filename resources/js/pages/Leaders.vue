@@ -277,6 +277,7 @@ export default defineComponent({
       showForm: false,
       editing: false,
       form: {
+        id: null,
         name: '',
         civilization_id: '',
         icon: '',
@@ -341,6 +342,28 @@ export default defineComponent({
     },
   },
   mounted() {
+    // Subscribe to the leader-updates channel.
+    window.Echo.channel('leader-updates')
+      .listen('LeaderUpdated', (event: { leader: any }) => {
+        console.log('LeaderUpdated event received:', event.leader);
+        // If the modal is open and editing the same leader, update the form.
+        if (this.editing && this.form.id === event.leader.id) {
+          this.form = { ...event.leader };
+        }
+        // Refresh the overall leader list.
+        this.fetchLeaders();
+      })
+      .listen('LeaderDeleted', (event: { leaderId: number }) => {
+        console.log('LeaderDeleted event received:', event.leaderId);
+        // If the deleted leader is currently being edited, close the modal.
+        if (this.editing && this.form.id === event.leaderId) {
+          this.cancelForm();
+        }
+        // Refresh the overall leader list.
+        this.fetchLeaders();
+      });
+
+    // Fetch initial data for leaders and available civilizations
     this.fetchLeaders();
     this.fetchAvailableCivilizations();
     window.addEventListener('keydown', this.handleEscape);

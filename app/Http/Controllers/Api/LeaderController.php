@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Leader;
 use App\Rules\ReachableUrl;
+use App\Events\DataChanged;
+use App\Events\LeaderUpdated;
+use App\Events\LeaderDeleted;
 use Illuminate\Http\Request;
 
 class LeaderController extends Controller
@@ -26,9 +29,13 @@ class LeaderController extends Controller
             'subtitle'        => 'required|string|max:255',
             'life_start'      => 'nullable|string|max:20|required_without:life_end',
             'life_end'        => 'nullable|string|max:20|required_without:life_start',
-        ]);        
+        ]);
 
         $leader = Leader::create($validatedData);
+
+        // Dispatch the DataChanged event to notify listeners about the new leader creation.
+        event(new DataChanged('A new leader has been created!'));
+
         return response()->json($leader, 201);
     }
 
@@ -49,9 +56,13 @@ class LeaderController extends Controller
             'subtitle'        => 'required|string|max:255',
             'life_start'      => 'nullable|string|max:20|required_without:life_end',
             'life_end'        => 'nullable|string|max:20|required_without:life_start',
-        ]);        
+        ]);
 
         $leader->update($validatedData);
+        
+        // Dispatch the DataChanged event to notify listeners about the leader update.
+        event(new LeaderUpdated($leader));
+
         return response()->json($leader);
     }
 
@@ -59,6 +70,10 @@ class LeaderController extends Controller
     public function destroy(Leader $leader): \Illuminate\Http\JsonResponse
     {
         $leader->delete();
+        
+        // Dispatch the DataChanged event to notify listeners about the leader deletion.
+        event(new LeaderDeleted($leader->id));
+
         return response()->json(null, 204);
     }
 }
